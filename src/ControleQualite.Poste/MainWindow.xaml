@@ -1,0 +1,181 @@
+<Window x:Class="ControleQualite.Poste.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ControleQualite.Poste"
+        Title="Poste de contrôle qualité" Width="1440" Height="900" MinWidth="1100" MinHeight="720"
+        Background="{StaticResource Fond}" FontFamily="Segoe UI" FontSize="14" Foreground="{StaticResource Texte}"
+        WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <local:CouleurVerdict x:Key="CouleurVerdict" />
+    <local:CouleurMessage x:Key="CouleurMessage" />
+    <local:CouleurNiveau x:Key="CouleurNiveau" />
+    <local:CouleurSignal x:Key="CouleurSignal" />
+  </Window.Resources>
+
+  <Grid Background="{StaticResource Fond}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- En-tête : le poste, l'OF, l'opérateur, l'instrument -->
+    <Border Background="{StaticResource Carte}" BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1" Padding="24,14">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Foreground="{StaticResource TexteDoux}" Text="{Binding Operateur, StringFormat='Opérateur : {0}'}" Margin="0,0,24,0" />
+          <TextBlock Foreground="{StaticResource TexteDoux}" Text="{Binding Instrument, StringFormat='Instrument : {0}'}" />
+        </StackPanel>
+        <StackPanel>
+          <TextBlock Text="{Binding NomPoste}" FontSize="20" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding TitreOf}" Foreground="{StaticResource TexteDoux}" />
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <!-- Message de l'étape en cours, vert ou rouge -->
+    <Border Grid.Row="1" Margin="24,16,24,0" CornerRadius="8" Padding="16,12"
+            Background="{Binding MessageAlerte, Converter={StaticResource CouleurMessage}, ConverterParameter=fond}">
+      <TextBlock Text="{Binding Message}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                 Foreground="{Binding MessageAlerte, Converter={StaticResource CouleurMessage}}" />
+    </Border>
+
+    <Grid Grid.Row="2" Margin="24,16,24,24">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="330" />
+        <ColumnDefinition Width="20" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <!-- Colonne de gauche : scanner la pièce, saisir à la main, bilan -->
+      <StackPanel>
+        <Border Style="{StaticResource Panneau}">
+          <StackPanel>
+            <TextBlock Style="{StaticResource Titre}" Text="Pièce suivante" />
+            <TextBlock Style="{StaticResource Etiquette}" Text="Numéro (douchette ou clavier, puis Entrée)" />
+            <TextBox x:Name="Scan" Text="{Binding NumeroSaisi, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding PeutScanner}">
+              <TextBox.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding CommencerCommand}" />
+              </TextBox.InputBindings>
+            </TextBox>
+            <Button Content="Commencer le contrôle" Command="{Binding CommencerCommand}" Margin="0,10,0,0" HorizontalAlignment="Stretch" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Panneau}" Margin="0,16,0,0">
+          <StackPanel>
+            <TextBlock Style="{StaticResource Titre}" Text="Mesure" />
+            <TextBlock Style="{StaticResource Etiquette}" Text="Saisie manuelle (mm), si l'instrument n'est pas relié" />
+            <TextBox Text="{Binding SaisieManuelle, UpdateSourceTrigger=PropertyChanged}">
+              <TextBox.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding SaisirCommand}" />
+              </TextBox.InputBindings>
+            </TextBox>
+            <Button Content="Simuler l'envoi de l'instrument" Command="{Binding SimulerCommand}" Margin="0,10,0,0"
+                    Visibility="{Binding InstrumentSimule, Converter={StaticResource Visible}}" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Panneau}" Margin="0,16,0,0">
+          <StackPanel>
+            <TextBlock Style="{StaticResource Titre}" Text="Ordre de fabrication" />
+            <TextBlock Text="{Binding Bilan}" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- Colonne principale : les cotes de la pièce, puis la carte de contrôle -->
+      <Grid Grid.Column="2">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Bandeau de quarantaine : bloque le poste tant que la pièce n'est pas isolée -->
+        <Border Background="{StaticResource MauvaisFond}" BorderBrush="{StaticResource Mauvais}" BorderThickness="2" CornerRadius="8"
+                Padding="18" Margin="0,0,0,16" Visibility="{Binding EnQuarantaine, Converter={StaticResource Visible}}">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="Isoler la pièce" Command="{Binding IsolerCommand}"
+                    Background="{StaticResource Mauvais}" VerticalAlignment="Bottom" Margin="16,0,0,0" />
+            <StackPanel>
+              <TextBlock FontSize="17" FontWeight="Bold" Foreground="{StaticResource Mauvais}"
+                         Text="{Binding NumeroEnQuarantaine, StringFormat='Pièce {0} non conforme : posez-la dans le bac rouge'}" />
+              <TextBlock Style="{StaticResource Etiquette}" Margin="0,8,0,4" Text="Motif (obligatoire pour débloquer le poste)" />
+              <TextBox Text="{Binding Motif, UpdateSourceTrigger=PropertyChanged}" FontSize="15" />
+            </StackPanel>
+          </DockPanel>
+        </Border>
+
+        <Border Grid.Row="1" Style="{StaticResource Panneau}">
+          <StackPanel>
+            <TextBlock Style="{StaticResource Titre}" Text="{Binding NumeroPieceEnCours, StringFormat='Cotes de la pièce {0}', TargetNullValue='Cotes du plan', FallbackValue='Cotes du plan'}" />
+            <Grid Margin="12,0,12,6">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2.4*" />
+                <ColumnDefinition Width="1.6*" />
+                <ColumnDefinition Width="1.2*" />
+                <ColumnDefinition Width="1.2*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Style="{StaticResource Etiquette}" Text="Cote" />
+              <TextBlock Grid.Column="1" Style="{StaticResource Etiquette}" Text="Tolérance (mm)" />
+              <TextBlock Grid.Column="2" Style="{StaticResource Etiquette}" Text="Mesure (mm)" TextAlignment="Right" />
+              <TextBlock Grid.Column="3" Style="{StaticResource Etiquette}" Text="Verdict" TextAlignment="Right" />
+            </Grid>
+            <ItemsControl ItemsSource="{Binding Cotes}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border CornerRadius="6" Padding="12,10" Margin="0,0,0,6">
+                    <Border.Background>
+                      <MultiBinding Converter="{StaticResource CouleurVerdict}" ConverterParameter="fond">
+                        <Binding Path="Verdict" />
+                        <Binding Path="Attendue" />
+                      </MultiBinding>
+                    </Border.Background>
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.4*" />
+                        <ColumnDefinition Width="1.6*" />
+                        <ColumnDefinition Width="1.2*" />
+                        <ColumnDefinition Width="1.2*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="{Binding Nom}" FontWeight="SemiBold" />
+                      <TextBlock Grid.Column="1" Text="{Binding Tolerance}" Foreground="{StaticResource TexteDoux}" />
+                      <TextBlock Grid.Column="2" Text="{Binding ValeurTexte}" FontFamily="Consolas" FontSize="16" TextAlignment="Right" />
+                      <TextBlock Grid.Column="3" Text="{Binding VerdictTexte}" FontWeight="Bold" TextAlignment="Right">
+                        <TextBlock.Foreground>
+                          <MultiBinding Converter="{StaticResource CouleurVerdict}">
+                            <Binding Path="Verdict" />
+                            <Binding Path="Attendue" />
+                          </MultiBinding>
+                        </TextBlock.Foreground>
+                      </TextBlock>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource Panneau}" Margin="0,16,0,0">
+          <DockPanel>
+            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+              <ComboBox DockPanel.Dock="Right" Width="280" ItemsSource="{Binding Cotes}" SelectedItem="{Binding CoteSuivie}"
+                        DisplayMemberPath="Nom" VerticalAlignment="Center" />
+              <TextBlock Style="{StaticResource Titre}" Text="{Binding Carte.Titre}" Margin="0" VerticalAlignment="Center" />
+            </DockPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,4">
+              <TextBlock Text="{Binding Carte.NiveauTexte}" FontWeight="Bold" Margin="0,0,12,0"
+                         Foreground="{Binding Carte.NiveauTexte, Converter={StaticResource CouleurNiveau}}" />
+              <TextBlock Text="{Binding Carte.TexteCapabilite}" Foreground="{StaticResource TexteDoux}" />
+            </StackPanel>
+            <TextBlock DockPanel.Dock="Top" Text="{Binding Carte.TexteSignal}" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Foreground="{Binding Carte.TexteSignal, Converter={StaticResource CouleurSignal}}" />
+            <local:CarteControle Vue="{Binding Carte}" MinHeight="200" />
+          </DockPanel>
+        </Border>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>

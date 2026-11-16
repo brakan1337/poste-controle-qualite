@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ControleQualite.Domaine/ControleQualite.Domaine.csproj" />
+    <Project Path="src/ControleQualite.Donnees/ControleQualite.Donnees.csproj" />
+    <Project Path="src/ControleQualite.Instruments/ControleQualite.Instruments.csproj" />
+    <Project Path="src/ControleQualite.Poste/ControleQualite.Poste.csproj" />
+    <Project Path="src/ControleQualite.Presentation/ControleQualite.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ControleQualite.Tests/ControleQualite.Tests.csproj" />
+  </Folder>
+</Solution>

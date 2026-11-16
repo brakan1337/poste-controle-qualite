@@ -1,0 +1,16 @@
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+insert_final_newline = true
+
+[*.{cs,xaml}]
+indent_size = 4
+
+[*.{csproj,props,json,yml,xml,manifest}]
+indent_size = 2
+
+# Les migrations sont produites par « dotnet ef » : on ne les retouche pas à la main.
+[**/Migrations/*.cs]
+generated_code = true

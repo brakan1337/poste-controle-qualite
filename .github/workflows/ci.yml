@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+jobs:
+  sql-server:
+    name: Tests sur SQLite puis SQL Server
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: Ci-Mot2Passe!Jetable
+        ports: ["1433:1433"]
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Ci-Mot2Passe!Jetable' -C -Q 'SELECT 1'"
+          --health-interval 5s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet tool restore
+      - name: Tests sur SQLite
+        run: dotnet test tests/ControleQualite.Tests
+      - name: Les migrations suivent le modèle
+        run: dotnet ef migrations has-pending-model-changes -p src/ControleQualite.Donnees -s src/ControleQualite.Donnees
+      - name: Tests sur SQL Server, avec les vraies migrations
+        run: dotnet test tests/ControleQualite.Tests --filter "FullyQualifiedName~AtelierTests"
+        env:
+          TESTS_SQLSERVER: Server=localhost,1433;Database=ControleQualiteCi;User Id=sa;Password=Ci-Mot2Passe!Jetable;TrustServerCertificate=True
+
+  windows:
+    name: Application WPF (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Compilation de toute la solution, avertissements bloquants
+        run: dotnet build ControleQualite.slnx -c Release
+      - run: dotnet test ControleQualite.slnx -c Release --no-build
+      - name: L'application démarre et rend son écran
+        shell: pwsh
+        run: |
+          $exe = "src/ControleQualite.Poste/bin/Release/net10.0-windows/PosteControleQualite.exe"
+          $p = Start-Process $exe -ArgumentList "--capture", "$PWD/capture.png" -PassThru -Wait
+          if ($p.ExitCode -ne 0 -or -not (Test-Path capture.png)) { throw "La capture a échoué (code $($p.ExitCode))" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: capture-du-poste
+          path: capture.png

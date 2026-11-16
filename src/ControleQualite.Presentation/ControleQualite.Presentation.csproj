@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- La logique de l'écran, sans dépendance à WPF : elle se teste partout, Linux compris. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>ControleQualite.Presentation</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ControleQualite.Domaine\ControleQualite.Domaine.csproj" />
+    <ProjectReference Include="..\ControleQualite.Instruments\ControleQualite.Instruments.csproj" />
+    <ProjectReference Include="..\ControleQualite.Donnees\ControleQualite.Donnees.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+</Project>
